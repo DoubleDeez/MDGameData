@@ -1,17 +1,17 @@
 #include "Util/MDGameDataBlueprintFunctionLibrary.h"
 
 #include "GameplayTagContainer.h"
-#include "Subsystems/MDGameDataSubsystem.h"
+#include "MDGameDataContainer.h"
 
 #define LOCTEXT_NAMESPACE "MDGameDataBlueprintFunctionLibrary"
 
-bool UMDGameDataBlueprintFunctionLibrary::GetGameDataValue(UObject* WorldContextObject, const FGameplayTag& DataKey, int32& OutValue)
+bool UMDGameDataBlueprintFunctionLibrary::GetGameDataValue(UMDGameDataContainer* GameDataContainer, const FGameplayTag& DataKey, int32& OutValue)
 {
 	checkf(false, TEXT("Calling a CustomThunk!"));
 	return false;
 }
 
-bool UMDGameDataBlueprintFunctionLibrary::SetGameDataValue(UObject* WorldContextObject, const FGameplayTag& DataKey, const int32& Value)
+bool UMDGameDataBlueprintFunctionLibrary::SetGameDataValue(UMDGameDataContainer* GameDataContainer, const FGameplayTag& DataKey, const int32& Value)
 {
 	checkf(false, TEXT("Calling a CustomThunk!"));
 	return false;
@@ -19,7 +19,7 @@ bool UMDGameDataBlueprintFunctionLibrary::SetGameDataValue(UObject* WorldContext
 
 DEFINE_FUNCTION(UMDGameDataBlueprintFunctionLibrary::execGetGameDataValue)
 {
-	P_GET_OBJECT(UObject, WorldContextObject);
+	P_GET_OBJECT(UMDGameDataContainer, GameDataContainer);
 	P_GET_STRUCT_REF(FGameplayTag, DataKey);
 
 	Stack.StepCompiledIn<FProperty>(nullptr);
@@ -27,6 +27,17 @@ DEFINE_FUNCTION(UMDGameDataBlueprintFunctionLibrary::execGetGameDataValue)
 	void* ValuePtr = Stack.MostRecentPropertyAddress;
 
 	P_FINISH;
+
+	if (GameDataContainer == nullptr)
+	{
+		const FBlueprintExceptionInfo ExceptionInfo(
+			EBlueprintExceptionType::AccessViolation,
+			LOCTEXT("GetData_MissingGameDataContainer", "A valid Game Data Container must be passed in.")
+		);
+		FBlueprintCoreDelegates::ThrowScriptException(P_THIS, Stack, ExceptionInfo);
+		*StaticCast<bool*>(RESULT_PARAM) = false;
+		return;
+	}
 
 	if (ValueProp == nullptr || ValuePtr == nullptr)
 	{
@@ -39,14 +50,44 @@ DEFINE_FUNCTION(UMDGameDataBlueprintFunctionLibrary::execGetGameDataValue)
 		return;
 	}
 
+	EMDGameDataContainerResult Result;
 	P_NATIVE_BEGIN
-	*StaticCast<bool*>(RESULT_PARAM) = GetDataFromPropertyWithExceptions(WorldContextObject, DataKey, ValueProp, ValuePtr, P_THIS, Stack);
+	Result = GameDataContainer->GetDataFromProperty(DataKey, ValueProp, ValuePtr);
 	P_NATIVE_END
+
+	if (Result == EMDGameDataContainerResult::Failure_TypeMismatch)
+	{
+		// TODO - better type naming than just the property type (eg. element types of array, class type of objects, etc)
+		const FBlueprintExceptionInfo ExceptionInfo(
+			EBlueprintExceptionType::AccessViolation,
+			FText::Format(LOCTEXT("GetDataFailed", "Failed to GetData for key [{0}], caller is expecting type [{1}]"),
+				FText::FromName(DataKey.GetTagName()),
+				ValueProp->GetClass()->GetDisplayNameText()
+			)
+		);
+		FBlueprintCoreDelegates::ThrowScriptException(P_THIS, Stack, ExceptionInfo);
+		*StaticCast<bool*>(RESULT_PARAM) = false;
+		return;
+	}
+	else if (Result == EMDGameDataContainerResult::Failure_NoEntry)
+	{
+		const FBlueprintExceptionInfo ExceptionInfo(
+			EBlueprintExceptionType::AccessViolation,
+			FText::Format(LOCTEXT("GetDataFailed", "Failed to GetData for key [{0}], the entry doesn't exist"),
+				FText::FromName(DataKey.GetTagName())
+			)
+		);
+		FBlueprintCoreDelegates::ThrowScriptException(P_THIS, Stack, ExceptionInfo);
+		*StaticCast<bool*>(RESULT_PARAM) = false;
+		return;
+	}
+	
+	*StaticCast<bool*>(RESULT_PARAM) = true;
 }
 
 DEFINE_FUNCTION(UMDGameDataBlueprintFunctionLibrary::execSetGameDataValue)
 {
-	P_GET_OBJECT(UObject, WorldContextObject);
+	P_GET_OBJECT(UMDGameDataContainer, GameDataContainer);
 	P_GET_STRUCT_REF(FGameplayTag, DataKey);
 
 	Stack.StepCompiledIn<FProperty>(nullptr);
@@ -54,6 +95,17 @@ DEFINE_FUNCTION(UMDGameDataBlueprintFunctionLibrary::execSetGameDataValue)
 	const void* ValuePtr = Stack.MostRecentPropertyAddress;
 
 	P_FINISH;
+
+	if (GameDataContainer == nullptr)
+	{
+		const FBlueprintExceptionInfo ExceptionInfo(
+			EBlueprintExceptionType::AccessViolation,
+			LOCTEXT("SetData_MissingGameDataContainer", "A valid Game Data Container must be passed in.")
+		);
+		FBlueprintCoreDelegates::ThrowScriptException(P_THIS, Stack, ExceptionInfo);
+		*StaticCast<bool*>(RESULT_PARAM) = false;
+		return;
+	}
 
 	if (ValueProp == nullptr || ValuePtr == nullptr)
 	{
@@ -66,43 +118,27 @@ DEFINE_FUNCTION(UMDGameDataBlueprintFunctionLibrary::execSetGameDataValue)
 		return;
 	}
 
+	EMDGameDataContainerResult Result;
 	P_NATIVE_BEGIN
-	*StaticCast<bool*>(RESULT_PARAM) = SetDataFromPropertyWithExceptions(WorldContextObject, DataKey, ValueProp, ValuePtr, P_THIS, Stack);
+	Result = GameDataContainer->SetDataFromProperty(DataKey, ValueProp, ValuePtr);
 	P_NATIVE_END
-}
-
-bool UMDGameDataBlueprintFunctionLibrary::GetDataFromPropertyWithExceptions(UObject* WorldContextObject,
-	const FGameplayTag& DataKey, const FProperty* Prop, void* ValuePtr, const UObject* ContextObject, FFrame& Stack)
-{
-	const UMDGameDataSubsystem* Subsystem = UMDGameDataSubsystem::Get(WorldContextObject);
-	if (Subsystem == nullptr)
-	{
-		const FBlueprintExceptionInfo ExceptionInfo(
-			EBlueprintExceptionType::AccessViolation,
-			LOCTEXT("GetData_ResolveSubsystemFailure", "Failed to retrieve the Game Data Subsystem for GetData.")
-		);
-		FBlueprintCoreDelegates::ThrowScriptException(ContextObject, Stack, ExceptionInfo);
-		return false;
-	}
 	
-	return Subsystem->GetDataFromPropertyWithExceptions(DataKey, Prop, ValuePtr, ContextObject, Stack);
-}
-
-bool UMDGameDataBlueprintFunctionLibrary::SetDataFromPropertyWithExceptions(UObject* WorldContextObject,
-                                                                            const FGameplayTag& DataKey, const FProperty* Prop, const void* ValuePtr, const UObject* ContextObject, FFrame& Stack)
-{
-	UMDGameDataSubsystem* Subsystem = UMDGameDataSubsystem::Get(WorldContextObject);
-	if (Subsystem == nullptr)
+	if (Result == EMDGameDataContainerResult::Failure_TypeMismatch)
 	{
+		// TODO - better type naming than just the property type (eg. element types of array, class type of objects, etc)
 		const FBlueprintExceptionInfo ExceptionInfo(
 			EBlueprintExceptionType::AccessViolation,
-			LOCTEXT("SetData_ResolveSubsystemFailure", "Failed to retrieve the Game Data Subsystem for SetData.")
+			FText::Format(LOCTEXT("SetDataFailed", "Failed to SetData for key [{0}], caller is expecting type [{1}]"),
+				FText::FromName(DataKey.GetTagName()),
+				ValueProp->GetClass()->GetDisplayNameText()
+			)
 		);
-		FBlueprintCoreDelegates::ThrowScriptException(ContextObject, Stack, ExceptionInfo);
-		return false;
+		FBlueprintCoreDelegates::ThrowScriptException(P_THIS, Stack, ExceptionInfo);
+		*StaticCast<bool*>(RESULT_PARAM) = false;
+		return;
 	}
 
-	return Subsystem->SetDataFromPropertyWithExceptions(DataKey, Prop, ValuePtr, ContextObject, Stack);
+	*StaticCast<bool*>(RESULT_PARAM) = true;
 }
 
 
