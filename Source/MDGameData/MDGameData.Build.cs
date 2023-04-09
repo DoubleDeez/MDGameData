@@ -10,7 +10,6 @@ public class MDGameData : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"BlueprintGraph",
 				"Core",
 				"DeveloperSettings",
 				"GameplayTags",
