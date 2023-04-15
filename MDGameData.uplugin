@@ -3,7 +3,7 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "MDGameData",
-	"Description": "A way for various game systems to read and write game data in a central location.",
+	"Description": "A way to pass around arbitrary data throughout the game at runtime.",
 	"Category": "Other",
 	"CreatedBy": "DoubleDeez",
 	"CreatedByURL": "https://github.com/DoubleDeez",
@@ -20,8 +20,8 @@
 			"LoadingPhase": "Default"
 		},
 		{
-			"Name": "MDGameDataEditor",
-			"Type": "Editor",
+			"Name": "MDGameDataGraph",
+			"Type": "UncookedOnly",
 			"LoadingPhase": "Default"
 		}
 	],

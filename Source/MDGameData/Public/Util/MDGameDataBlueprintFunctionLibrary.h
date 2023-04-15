@@ -4,6 +4,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "MDGameDataBlueprintFunctionLibrary.generated.h"
 
+enum class EMDGameDataContainerSource : uint8;
 class UMDGameDataContainer;
 struct FGameplayTag;
 
@@ -23,4 +24,10 @@ public:
 	UFUNCTION(BlueprintCallable, CustomThunk, BlueprintInternalUseOnly, Category="Game Data", meta = (CustomStructureParam = "Value", AutoCreateRefTerm = "DataKey"))
 	static UPARAM(DisplayName="Success") bool SetGameDataValue(UMDGameDataContainer* GameDataContainer, const FGameplayTag& DataKey, const int32& Value);
 	DECLARE_FUNCTION(execSetGameDataValue);
+
+	UFUNCTION(BlueprintCallable, Category="Game Data")
+	static UMDGameDataContainer* GetGameDataContainerForActor(const AActor* Actor);
+	
+	UFUNCTION(BlueprintCallable, Category="Game Data")
+	static UMDGameDataContainer* ResolveGameDataSource(EMDGameDataContainerSource Source, UObject* Context);
 };

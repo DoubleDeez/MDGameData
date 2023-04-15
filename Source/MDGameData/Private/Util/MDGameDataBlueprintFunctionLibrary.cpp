@@ -2,6 +2,14 @@
 
 #include "GameplayTagContainer.h"
 #include "MDGameDataContainer.h"
+#include "Components/MDGameDataComponent.h"
+#include "Engine/Engine.h"
+#include "GameFramework/Actor.h"
+#include "Subsystems/MDGlobalGameDataSubsystem.h"
+#include "Subsystems/MDLocalPlayerGameDataSubsystem.h"
+#include "Subsystems/MDWorldGameDataSubsystem.h"
+#include "Util/MDGameDataLogging.h"
+#include "Util\MDGameDataTypes.h"
 
 #define LOCTEXT_NAMESPACE "MDGameDataBlueprintFunctionLibrary"
 
@@ -62,7 +70,7 @@ DEFINE_FUNCTION(UMDGameDataBlueprintFunctionLibrary::execGetGameDataValue)
 			EBlueprintExceptionType::AccessViolation,
 			FText::Format(LOCTEXT("GetDataFailed", "Failed to GetData for key [{0}], caller is expecting type [{1}]"),
 				FText::FromName(DataKey.GetTagName()),
-				ValueProp->GetClass()->GetDisplayNameText()
+				FText::FromString(ValueProp->GetCPPType())
 			)
 		);
 		FBlueprintCoreDelegates::ThrowScriptException(P_THIS, Stack, ExceptionInfo);
@@ -130,7 +138,7 @@ DEFINE_FUNCTION(UMDGameDataBlueprintFunctionLibrary::execSetGameDataValue)
 			EBlueprintExceptionType::AccessViolation,
 			FText::Format(LOCTEXT("SetDataFailed", "Failed to SetData for key [{0}], caller is expecting type [{1}]"),
 				FText::FromName(DataKey.GetTagName()),
-				ValueProp->GetClass()->GetDisplayNameText()
+				FText::FromString(ValueProp->GetCPPType())
 			)
 		);
 		FBlueprintCoreDelegates::ThrowScriptException(P_THIS, Stack, ExceptionInfo);
@@ -139,6 +147,55 @@ DEFINE_FUNCTION(UMDGameDataBlueprintFunctionLibrary::execSetGameDataValue)
 	}
 
 	*StaticCast<bool*>(RESULT_PARAM) = true;
+}
+
+UMDGameDataContainer* UMDGameDataBlueprintFunctionLibrary::GetGameDataContainerForActor(const AActor* Actor)
+{
+	if (!IsValid(Actor))
+	{
+		return nullptr;
+	}
+
+	const UMDGameDataComponent* Component = Actor->FindComponentByClass<UMDGameDataComponent>();
+	if (!IsValid(Component))
+	{
+		return nullptr;
+	}
+
+	return Component->GetGameDataContainer();
+}
+
+UMDGameDataContainer* UMDGameDataBlueprintFunctionLibrary::ResolveGameDataSource(EMDGameDataContainerSource Source, UObject* Context)
+{
+	if (Source == EMDGameDataContainerSource::Global)
+	{
+		return UMDGlobalGameDataSubsystem::GetGlobalGameDataContainer(Context);
+	}
+	
+	if (Source == EMDGameDataContainerSource::World)
+	{
+		return UMDWorldGameDataSubsystem::GetWorldGameDataContainer(Context);
+	}
+	
+	if (Source == EMDGameDataContainerSource::LocalPlayer)
+	{
+		return UMDLocalPlayerGameDataSubsystem::GetFirstLocalPlayerGameDataContainer(Context);
+	}
+	
+	if (Source == EMDGameDataContainerSource::Component)
+	{
+		if (const AActor* Actor = Cast<AActor>(Context))
+		{
+			return GetGameDataContainerForActor(Actor);
+		}
+		else
+		{
+			UE_LOG(LogMDGameData, Error, TEXT("UMDGameDataBlueprintFunctionLibrary::ResolveGameDataSource called with Source type 'Actor' without a valid Actor Context"));
+			return nullptr;
+		}
+	}
+
+	return nullptr;
 }
 
 

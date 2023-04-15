@@ -1,0 +1,26 @@
+#include "Util/MDGameDataTypeUtils.h"
+
+#include "UObject/TextProperty.h"
+#include "UObject/UnrealType.h"
+
+MDGAMEDATA_DEFINETYPEUTILS(int8, FInt8Property)
+MDGAMEDATA_DEFINETYPEUTILS(int16, FInt16Property)
+MDGAMEDATA_DEFINETYPEUTILS(int32, FIntProperty)
+MDGAMEDATA_DEFINETYPEUTILS(int64, FInt64Property)
+MDGAMEDATA_DEFINETYPEUTILS(uint8, FByteProperty)
+MDGAMEDATA_DEFINETYPEUTILS(char, FByteProperty)
+MDGAMEDATA_DEFINETYPEUTILS(uint16, FUInt16Property)
+MDGAMEDATA_DEFINETYPEUTILS(uint32, FUInt32Property)
+MDGAMEDATA_DEFINETYPEUTILS(uint64, FUInt64Property)
+MDGAMEDATA_DEFINETYPEUTILS(float, FFloatProperty)
+MDGAMEDATA_DEFINETYPEUTILS(double, FDoubleProperty)
+
+MDGAMEDATA_DEFINETYPEUTILS(FString, FStrProperty)
+MDGAMEDATA_DEFINETYPEUTILS(FName, FNameProperty)
+MDGAMEDATA_DEFINETYPEUTILS(FText, FTextProperty)
+
+const FProperty* TestFunc()
+{
+	return TMDGameDataTypeUtils<UObject>::ConstructProperty(FName(TEXT("Test")));
+}
+
