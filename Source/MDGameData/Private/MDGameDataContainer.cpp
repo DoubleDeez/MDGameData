@@ -2,9 +2,144 @@
 
 #define LOCTEXT_NAMESPACE "MDGameDataContainer"
 
+namespace MDGameDataContainer_Private
+{
+	bool DoesPropertyReferenceUObjects(const FProperty* Property, TSet<const FProperty*>& SeenList)
+	{
+		if (SeenList.Contains(Property))
+		{
+			return false;
+		}
+		SeenList.Add(Property);
+		
+		if (Property->IsA<FObjectProperty>())
+		{
+			return true;
+		}
+
+		if (const FStructProperty* StructProperty = Cast<FStructProperty>(Property))
+		{
+			for (TFieldIterator<const FProperty> It(StructProperty->Struct); It; ++It)
+			{
+				if (DoesPropertyReferenceUObjects(*It, SeenList))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		if (const FArrayProperty* ArrayProperty = Cast<FArrayProperty>(Property))
+		{
+			return DoesPropertyReferenceUObjects(ArrayProperty->Inner, SeenList);
+		}
+
+		if (const FSetProperty* SetProperty = Cast<FSetProperty>(Property))
+		{
+			return DoesPropertyReferenceUObjects(SetProperty->ElementProp, SeenList);
+		}
+
+		if (const FMapProperty* MapProperty = Cast<FMapProperty>(Property))
+		{
+			if (DoesPropertyReferenceUObjects(MapProperty->KeyProp, SeenList))
+			{
+				return true;
+			}
+
+			return DoesPropertyReferenceUObjects(MapProperty->ValueProp, SeenList);
+		}
+
+		return false;
+	}
+	
+	void AddPropertyReferencedUObjects(FReferenceCollector& Collector, const FProperty* Property, const void* ValuePtr, TSet<TPair<const FProperty*, const void*>>& SeenList)
+	{
+		TPair<const FProperty*, const void*> Pair { Property, ValuePtr };
+		if (SeenList.Contains(Pair))
+		{
+			return;
+		}
+		
+		SeenList.Add(MoveTemp(Pair));
+		
+		if (Property->IsA<FObjectProperty>())
+		{
+			UObject** ObjectPtr = static_cast<UObject**>(const_cast<void*>(ValuePtr));
+			if (ObjectPtr != nullptr && *ObjectPtr != nullptr)
+			{
+				Collector.AddReferencedObject(*ObjectPtr);
+			}
+		}
+		else if (const FStructProperty* StructProperty = Cast<FStructProperty>(Property))
+		{
+			Collector.AddPropertyReferences(StructProperty->Struct, const_cast<void*>(ValuePtr));
+		}
+		else if (const FArrayProperty* ArrayProperty = Cast<FArrayProperty>(Property))
+		{
+			TSet<const FProperty*> PropSeenList;
+			if (DoesPropertyReferenceUObjects(ArrayProperty->Inner, PropSeenList))
+			{
+				FScriptArrayHelper Helper(ArrayProperty, ValuePtr);
+				for (int32 i = 0; i < Helper.Num(); ++i)
+				{
+					const void* ElementPtr = Helper.GetRawPtr(i);
+					AddPropertyReferencedUObjects(Collector, ArrayProperty->Inner, ElementPtr, SeenList);
+				}
+			}
+		}
+		else if (const FSetProperty* SetProperty = Cast<FSetProperty>(Property))
+		{
+			TSet<const FProperty*> PropSeenList;
+			if (DoesPropertyReferenceUObjects(SetProperty->ElementProp, PropSeenList))
+			{
+				FScriptSetHelper Helper(SetProperty, ValuePtr);
+				for (int32 i = 0; i < Helper.Num(); ++i)
+				{
+					const void* ElementPtr = Helper.GetElementPtr(i);
+					AddPropertyReferencedUObjects(Collector, SetProperty->ElementProp, ElementPtr, SeenList);
+				}
+			}
+		}
+		else if (const FMapProperty* MapProperty = Cast<FMapProperty>(Property))
+		{
+			TSet<const FProperty*> PropSeenList;
+			const bool bDoesKeyReferenceUObjects = DoesPropertyReferenceUObjects(MapProperty->KeyProp, PropSeenList);
+			PropSeenList.Reset();
+			const bool bDoesValueReferenceUObjects = DoesPropertyReferenceUObjects(MapProperty->ValueProp, PropSeenList);
+			if (bDoesKeyReferenceUObjects || bDoesValueReferenceUObjects)
+			{
+				FScriptMapHelper Helper(MapProperty, ValuePtr);
+				for (int32 i = 0; i < Helper.Num(); ++i)
+				{
+					if (bDoesKeyReferenceUObjects)
+					{
+						const void* KeyPtr = Helper.GetKeyPtr(i);
+						AddPropertyReferencedUObjects(Collector, SetProperty->ElementProp, KeyPtr, SeenList);
+					}
+					
+					if (bDoesValueReferenceUObjects)
+					{
+						const void* MapValuePtr = Helper.GetValuePtr(i);
+						AddPropertyReferencedUObjects(Collector, SetProperty->ElementProp, MapValuePtr, SeenList);
+					}
+				}
+			}
+		}
+	}
+}
+
 void UMDGameDataContainer::AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector)
 {
-	// TODO - Add any UObjects held in our map
+	if (UMDGameDataContainer* This = Cast<UMDGameDataContainer>(InThis))
+	{
+		TSet<TPair<const FProperty*, const void*>> SeenList;
+		for (const FGameplayTag& EntryKey : This->EntriesWithUObjects)
+		{
+			SeenList.Reset();
+			MDGameDataContainer_Private::AddPropertyReferencedUObjects(Collector, This->DataEntries[EntryKey].EntryProperty, This->DataEntries[EntryKey].EntryValuePtr, SeenList);
+		}
+	}
 	
 	UObject::AddReferencedObjects(InThis, Collector);
 }
@@ -49,7 +184,7 @@ EMDGameDataContainerResult UMDGameDataContainer::SetDataFromProperty(const FGame
 	}
 	else
 	{
-		const FMDGameDataEntry& NewEntry = DataEntries.Emplace(DataKey, FMDGameDataEntry(Allocator, DataKey.GetTagName(), Prop));
+		const FMDGameDataEntry& NewEntry = AddEntry(DataKey, FMDGameDataEntry(Allocator, DataKey.GetTagName(), Prop));
 		NewEntry.EntryProperty->CopyCompleteValue(NewEntry.EntryValuePtr, ValuePtr);
 		return EMDGameDataContainerResult::Success_NewEntry;
 	}
@@ -75,6 +210,20 @@ EMDGameDataContainerResult UMDGameDataContainer::GetDataFromProperty(const FGame
 
 	Prop->CopyCompleteValue(ValuePtr, Entry.Value);
 	return EMDGameDataContainerResult::Success_ExistingEntry;
+}
+
+const FMDGameDataEntry& UMDGameDataContainer::AddEntry(const FGameplayTag& DataKey, FMDGameDataEntry&& Entry)
+{
+	const FMDGameDataEntry& NewEntry = DataEntries.Emplace(DataKey, MoveTemp(Entry));
+	
+	TSet<const FProperty*> SeenList;
+	if (MDGameDataContainer_Private::DoesPropertyReferenceUObjects(NewEntry.EntryProperty, SeenList))
+	{
+		// TODO - Do anything we can here to make AddReferencedObjects quicker
+		EntriesWithUObjects.Add(DataKey);
+	}
+	
+	return NewEntry;
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -49,8 +49,11 @@ public:
 	EMDGameDataContainerResult GetData(const FGameplayTag& DataKey, T& OutResult) const;
 
 protected:
+	const FMDGameDataEntry& AddEntry(const FGameplayTag& DataKey, FMDGameDataEntry&& Entry);
+	
 	FMDGameDataAllocator Allocator;
 	TMap<FGameplayTag, FMDGameDataEntry> DataEntries;
+	TSet<FGameplayTag> EntriesWithUObjects;
 };
 
 template <typename T>
@@ -79,7 +82,7 @@ EMDGameDataContainerResult UMDGameDataContainer::SetData(const FGameplayTag& Dat
 	}
 	else
 	{
-		const FMDGameDataEntry& NewEntry = DataEntries.Emplace(DataKey, FMDGameDataEntry(Allocator, DataKey.GetTagName(), Prop));
+		const FMDGameDataEntry& NewEntry = AddEntry(DataKey, FMDGameDataEntry(Allocator, DataKey.GetTagName(), Prop));
 		NewEntry.EntryProperty->CopyCompleteValue(NewEntry.EntryValuePtr, &Value);
 		return EMDGameDataContainerResult::Success_NewEntry;
 	}
