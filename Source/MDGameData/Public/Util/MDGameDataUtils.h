@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include <typeinfo>
 #include "MDGameDataTypeUtils.h"
 #include "UObject/ObjectPtr.h"
 

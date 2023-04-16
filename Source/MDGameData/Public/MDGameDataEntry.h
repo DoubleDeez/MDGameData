@@ -2,12 +2,14 @@
 
 #include "CoreMinimal.h"
 
+class FMDGameDataAllocator;
+
 struct FMDGameDataEntry
 {
-	FMDGameDataEntry(const FName& Name, const FProperty* SourceProp);
+	FMDGameDataEntry(FMDGameDataAllocator& Allocator, const FName& Name, const FProperty* SourceProp);
 
 	template<typename T>
-	FMDGameDataEntry(const FName& Name, const T& Value);
+	FMDGameDataEntry(FMDGameDataAllocator& Allocator, const FName& Name, const T& Value);
 	
 	FMDGameDataEntry(const FMDGameDataEntry& Other) = delete;
 	FMDGameDataEntry& operator=(const FMDGameDataEntry& Other) = delete;
@@ -22,13 +24,13 @@ struct FMDGameDataEntry
 	void* EntryValuePtr = nullptr;
 
 private:
-	void InitializeEntry();
+	void InitializeEntry(FMDGameDataAllocator& Allocator);
 };
 
 template <typename T>
-FMDGameDataEntry::FMDGameDataEntry(const FName& Name, const T& Value)
+FMDGameDataEntry::FMDGameDataEntry(FMDGameDataAllocator& Allocator, const FName& Name, const T& Value)
 {
 	// TODO - Construct EntryProperty from T
-	InitializeEntry();
+	InitializeEntry(Allocator);
 }
 

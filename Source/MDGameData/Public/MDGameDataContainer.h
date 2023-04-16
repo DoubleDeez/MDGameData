@@ -1,9 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include <typeinfo>
 #include "GameplayTagContainer.h"
 #include "MDGameDataEntry.h"
 #include "UObject/Object.h"
+#include "Util/MDGameDataAllocator.h"
 #include "Util/MDGameDataUtils.h"
 #include "MDGameDataContainer.generated.h"
 
@@ -47,6 +49,7 @@ public:
 	EMDGameDataContainerResult GetData(const FGameplayTag& DataKey, T& OutResult) const;
 
 protected:
+	FMDGameDataAllocator Allocator;
 	TMap<FGameplayTag, FMDGameDataEntry> DataEntries;
 };
 

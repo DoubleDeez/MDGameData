@@ -1,13 +1,14 @@
 #include "MDGameDataEntry.h"
 
 #include "UObject/UnrealType.h"
+#include "Util/MDGameDataAllocator.h"
 
-FMDGameDataEntry::FMDGameDataEntry(const FName& Name, const FProperty* SourceProp)
+FMDGameDataEntry::FMDGameDataEntry(FMDGameDataAllocator& Allocator, const FName& Name, const FProperty* SourceProp)
 {
 	check(SourceProp != nullptr);
 	
 	EntryProperty = static_cast<FProperty*>(FField::Duplicate(SourceProp, {}, Name, RF_Transient, EInternalObjectFlags::None));
-	InitializeEntry();
+	InitializeEntry(Allocator);
 }
 
 FMDGameDataEntry::FMDGameDataEntry(FMDGameDataEntry&& Other) noexcept
@@ -22,20 +23,13 @@ FMDGameDataEntry::~FMDGameDataEntry()
 		delete EntryProperty;
 		EntryProperty = nullptr;
 	}
-
-	if (EntryValuePtr != nullptr)
-	{
-		FMemory::Free(EntryValuePtr);
-		EntryValuePtr = nullptr;
-	}
 }
 
-void FMDGameDataEntry::InitializeEntry()
+void FMDGameDataEntry::InitializeEntry(FMDGameDataAllocator& Allocator)
 {
 	check(EntryProperty);
 	
-	// TODO - Consider using pre-allocated blocks of memory for the data entries
-	EntryValuePtr = FMemory::Malloc(EntryProperty->GetSize(), EntryProperty->GetMinAlignment());
+	EntryValuePtr = Allocator.Allocate(EntryProperty->GetSize());
 	EntryProperty->InitializeValue(EntryValuePtr);
 }
 
