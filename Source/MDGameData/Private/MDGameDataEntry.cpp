@@ -8,7 +8,8 @@ FMDGameDataEntry::FMDGameDataEntry(FMDGameDataAllocator& Allocator, const FName&
 	check(SourceProp != nullptr);
 	
 	EntryProperty = static_cast<FProperty*>(FField::Duplicate(SourceProp, {}, Name, RF_Transient, EInternalObjectFlags::None));
-	InitializeEntry(Allocator);
+	EntryValuePtr = Allocator.Allocate(EntryProperty->GetSize());
+	EntryProperty->InitializeValue(EntryValuePtr);
 }
 
 FMDGameDataEntry::FMDGameDataEntry(FMDGameDataEntry&& Other) noexcept
@@ -23,14 +24,6 @@ FMDGameDataEntry::~FMDGameDataEntry()
 		delete EntryProperty;
 		EntryProperty = nullptr;
 	}
-}
-
-void FMDGameDataEntry::InitializeEntry(FMDGameDataAllocator& Allocator)
-{
-	check(EntryProperty);
-	
-	EntryValuePtr = Allocator.Allocate(EntryProperty->GetSize());
-	EntryProperty->InitializeValue(EntryValuePtr);
 }
 
 FMDGameDataEntry& FMDGameDataEntry::operator=(FMDGameDataEntry&& Other) noexcept

@@ -79,7 +79,7 @@ EMDGameDataContainerResult UMDGameDataContainer::SetData(const FGameplayTag& Dat
 	}
 	else
 	{
-		const FMDGameDataEntry& NewEntry = DataEntries.Emplace(DataKey, FMDGameDataEntry(DataKey.GetTagName(), Prop));
+		const FMDGameDataEntry& NewEntry = DataEntries.Emplace(DataKey, FMDGameDataEntry(Allocator, DataKey.GetTagName(), Prop));
 		NewEntry.EntryProperty->CopyCompleteValue(NewEntry.EntryValuePtr, &Value);
 		return EMDGameDataContainerResult::Success_NewEntry;
 	}
