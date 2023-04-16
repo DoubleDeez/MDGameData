@@ -80,6 +80,18 @@ struct MDGAMEDATA_API TMDGameDataTypeUtils
 
 template<typename T>
 struct MDGAMEDATA_API TMDGameDataTypeUtils
+<TObjectPtr<T>, TObjectPtr<T>>
+{
+	static FORCEINLINE const FProperty* ConstructProperty(const FName& PropName)
+	{
+		FObjectPtrProperty* ObjectProperty = static_cast<FObjectPtrProperty*>(FObjectPtrProperty::Construct({}, PropName, RF_Transient | RF_Public));
+		ObjectProperty->SetPropertyClass(T::StaticClass());
+		return ObjectProperty;
+	}
+};
+
+template<typename T>
+struct MDGAMEDATA_API TMDGameDataTypeUtils
 <T, typename TEnableIf<TIsUEnumClass<T>::Value, T>::Type>
 {
 	static FORCEINLINE const FProperty* ConstructProperty(const FName& PropName)
