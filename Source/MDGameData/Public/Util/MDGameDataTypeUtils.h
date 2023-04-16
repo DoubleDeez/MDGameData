@@ -68,6 +68,18 @@ struct MDGAMEDATA_API TMDGameDataTypeUtils
 
 template<typename T>
 struct MDGAMEDATA_API TMDGameDataTypeUtils
+<TWeakObjectPtr<T>, TWeakObjectPtr<T>>
+{
+	static FORCEINLINE const FProperty* ConstructProperty(const FName& PropName)
+	{
+		FWeakObjectProperty* ObjectProperty = static_cast<FWeakObjectProperty*>(FWeakObjectProperty::Construct({}, PropName, RF_Transient | RF_Public));
+		ObjectProperty->SetPropertyClass(T::StaticClass());
+		return ObjectProperty;
+	}
+};
+
+template<typename T>
+struct MDGAMEDATA_API TMDGameDataTypeUtils
 <T, typename TEnableIf<TIsUEnumClass<T>::Value, T>::Type>
 {
 	static FORCEINLINE const FProperty* ConstructProperty(const FName& PropName)
