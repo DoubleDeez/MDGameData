@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include <typeinfo>
 #include "MDGameDataTypeUtils.h"
-#include "UObject/ObjectPtr.h"
 
 template<typename T>
 using TMDGameDataForceResolveRawType = typename TRemoveCV<typename TRemoveObjectPointer<typename TRemoveCV<typename TRemovePointer<T>::Type>::Type>::Type>::Type;
@@ -17,7 +16,7 @@ using TMDGameDataResolvedType = typename TChooseClass<TIsDerivedFrom<ForcedRawT,
 namespace MDGameDataUtils
 {
 	template<typename T, typename RawT = TMDGameDataResolvedType<T>>
-	static const FProperty* GetPropertyForType()
+	FORCEINLINE static const FProperty* GetPropertyForType()
 	{
 		static const FProperty* StaticProp = nullptr;
 		if (StaticProp == nullptr)

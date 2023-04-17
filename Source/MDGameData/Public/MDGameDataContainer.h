@@ -57,7 +57,7 @@ protected:
 };
 
 template <typename T>
-EMDGameDataContainerResult UMDGameDataContainer::SetData(const FGameplayTag& DataKey, const T& Value)
+FORCEINLINE EMDGameDataContainerResult UMDGameDataContainer::SetData(const FGameplayTag& DataKey, const T& Value)
 {
 	if (!DataKey.IsValid())
 	{
@@ -89,7 +89,7 @@ EMDGameDataContainerResult UMDGameDataContainer::SetData(const FGameplayTag& Dat
 }
 
 template <typename T>
-EMDGameDataContainerResult UMDGameDataContainer::GetData(const FGameplayTag& DataKey, T& OutResult) const
+FORCEINLINE EMDGameDataContainerResult UMDGameDataContainer::GetData(const FGameplayTag& DataKey, T& OutResult) const
 {
 	const TTuple<const FProperty*, const void*> Entry = GetData(DataKey);
 	if (Entry.Key == nullptr || Entry.Value == nullptr)
