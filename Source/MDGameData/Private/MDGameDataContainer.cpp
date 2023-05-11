@@ -1,4 +1,5 @@
 #include "MDGameDataContainer.h"
+#include "UObject/UnrealType.h"
 
 #define LOCTEXT_NAMESPACE "MDGameDataContainer"
 
@@ -17,7 +18,7 @@ namespace MDGameDataContainer_Private
 			return true;
 		}
 
-		if (const FStructProperty* StructProperty = Cast<FStructProperty>(Property))
+		if (const FStructProperty* StructProperty = CastField<FStructProperty>(Property))
 		{
 			for (TFieldIterator<const FProperty> It(StructProperty->Struct); It; ++It)
 			{
@@ -30,17 +31,17 @@ namespace MDGameDataContainer_Private
 			return false;
 		}
 
-		if (const FArrayProperty* ArrayProperty = Cast<FArrayProperty>(Property))
+		if (const FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property))
 		{
 			return DoesPropertyReferenceUObjects(ArrayProperty->Inner, SeenList);
 		}
 
-		if (const FSetProperty* SetProperty = Cast<FSetProperty>(Property))
+		if (const FSetProperty* SetProperty = CastField<FSetProperty>(Property))
 		{
 			return DoesPropertyReferenceUObjects(SetProperty->ElementProp, SeenList);
 		}
 
-		if (const FMapProperty* MapProperty = Cast<FMapProperty>(Property))
+		if (const FMapProperty* MapProperty = CastField<FMapProperty>(Property))
 		{
 			if (DoesPropertyReferenceUObjects(MapProperty->KeyProp, SeenList))
 			{
@@ -71,11 +72,11 @@ namespace MDGameDataContainer_Private
 				Collector.AddReferencedObject(*ObjectPtr);
 			}
 		}
-		else if (const FStructProperty* StructProperty = Cast<FStructProperty>(Property))
+		else if (const FStructProperty* StructProperty = CastField<FStructProperty>(Property))
 		{
 			Collector.AddPropertyReferences(StructProperty->Struct, const_cast<void*>(ValuePtr));
 		}
-		else if (const FArrayProperty* ArrayProperty = Cast<FArrayProperty>(Property))
+		else if (const FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property))
 		{
 			TSet<const FProperty*> PropSeenList;
 			if (DoesPropertyReferenceUObjects(ArrayProperty->Inner, PropSeenList))
@@ -88,7 +89,7 @@ namespace MDGameDataContainer_Private
 				}
 			}
 		}
-		else if (const FSetProperty* SetProperty = Cast<FSetProperty>(Property))
+		else if (const FSetProperty* SetProperty = CastField<FSetProperty>(Property))
 		{
 			TSet<const FProperty*> PropSeenList;
 			if (DoesPropertyReferenceUObjects(SetProperty->ElementProp, PropSeenList))
@@ -101,7 +102,7 @@ namespace MDGameDataContainer_Private
 				}
 			}
 		}
-		else if (const FMapProperty* MapProperty = Cast<FMapProperty>(Property))
+		else if (const FMapProperty* MapProperty = CastField<FMapProperty>(Property))
 		{
 			TSet<const FProperty*> PropSeenList;
 			const bool bDoesKeyReferenceUObjects = DoesPropertyReferenceUObjects(MapProperty->KeyProp, PropSeenList);
