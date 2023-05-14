@@ -27,4 +27,6 @@ namespace MDGameDataUtils
 
 		return StaticProp;
 	}
+
+	MDGAMEDATA_API FString GetPropertyTypeAsString(const FProperty* Property);
 };

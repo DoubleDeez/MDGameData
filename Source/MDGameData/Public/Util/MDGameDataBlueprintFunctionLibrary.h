@@ -9,7 +9,7 @@ class UMDGameDataContainer;
 struct FGameplayTag;
 
 /**
- * 
+ *
  */
 UCLASS()
 class MDGAMEDATA_API UMDGameDataBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
@@ -27,7 +27,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Game Data")
 	static UMDGameDataContainer* GetGameDataContainerForActor(const AActor* Actor);
-	
-	UFUNCTION(BlueprintCallable, Category="Game Data")
+
+	UFUNCTION(BlueprintCallable, Category="Game Data", meta = (DefaultToSelf = "Context"))
 	static UMDGameDataContainer* ResolveGameDataSource(EMDGameDataContainerSource Source, UObject* Context);
 };

@@ -12,7 +12,7 @@ namespace MDGameDataContainer_Private
 			return false;
 		}
 		SeenList.Add(Property);
-		
+
 		if (Property->IsA<FObjectProperty>())
 		{
 			return true;
@@ -53,7 +53,7 @@ namespace MDGameDataContainer_Private
 
 		return false;
 	}
-	
+
 	void AddPropertyReferencedUObjects(FReferenceCollector& Collector, const FProperty* Property, const void* ValuePtr, TSet<TPair<const FProperty*, const void*>>& SeenList)
 	{
 		TPair<const FProperty*, const void*> Pair { Property, ValuePtr };
@@ -61,9 +61,9 @@ namespace MDGameDataContainer_Private
 		{
 			return;
 		}
-		
+
 		SeenList.Add(MoveTemp(Pair));
-		
+
 		if (Property->IsA<FObjectProperty>())
 		{
 			UObject** ObjectPtr = static_cast<UObject**>(const_cast<void*>(ValuePtr));
@@ -118,7 +118,7 @@ namespace MDGameDataContainer_Private
 						const void* KeyPtr = Helper.GetKeyPtr(i);
 						AddPropertyReferencedUObjects(Collector, SetProperty->ElementProp, KeyPtr, SeenList);
 					}
-					
+
 					if (bDoesValueReferenceUObjects)
 					{
 						const void* MapValuePtr = Helper.GetValuePtr(i);
@@ -141,7 +141,7 @@ void UMDGameDataContainer::AddReferencedObjects(UObject* InThis, FReferenceColle
 			MDGameDataContainer_Private::AddPropertyReferencedUObjects(Collector, This->DataEntries[EntryKey].EntryProperty, This->DataEntries[EntryKey].EntryValuePtr, SeenList);
 		}
 	}
-	
+
 	UObject::AddReferencedObjects(InThis, Collector);
 }
 
@@ -172,7 +172,7 @@ EMDGameDataContainerResult UMDGameDataContainer::SetDataFromProperty(const FGame
 	{
 		return EMDGameDataContainerResult::Failure_InvalidInputs;
 	}
-	
+
 	if (const FMDGameDataEntry* Entry = DataEntries.Find(DataKey))
 	{
 		if (!Entry->EntryProperty->SameType(Prop))
@@ -181,12 +181,14 @@ EMDGameDataContainerResult UMDGameDataContainer::SetDataFromProperty(const FGame
 		}
 
 		Entry->EntryProperty->CopyCompleteValue(Entry->EntryValuePtr, ValuePtr);
+		BroadcastEntryChanged(DataKey);
 		return EMDGameDataContainerResult::Success_ExistingEntry;
 	}
 	else
 	{
 		const FMDGameDataEntry& NewEntry = AddEntry(DataKey, FMDGameDataEntry(Allocator, DataKey.GetTagName(), Prop));
 		NewEntry.EntryProperty->CopyCompleteValue(NewEntry.EntryValuePtr, ValuePtr);
+		BroadcastEntryChanged(DataKey);
 		return EMDGameDataContainerResult::Success_NewEntry;
 	}
 }
@@ -197,7 +199,7 @@ EMDGameDataContainerResult UMDGameDataContainer::GetDataFromProperty(const FGame
 	{
 		return EMDGameDataContainerResult::Failure_InvalidInputs;
 	}
-	
+
 	const TTuple<const FProperty*, const void*> Entry = GetData(DataKey);
 	if (Entry.Key == nullptr || Entry.Value == nullptr)
 	{
@@ -213,18 +215,70 @@ EMDGameDataContainerResult UMDGameDataContainer::GetDataFromProperty(const FGame
 	return EMDGameDataContainerResult::Success_ExistingEntry;
 }
 
+void UMDGameDataContainer::BindOnEntryChanged(const FGameplayTag& DataKey, FMDOnGameDataEntryChanged Delegate)
+{
+	DataEntryDynamicDelegates.FindOrAdd(DataKey).AddUnique(Delegate);
+}
+
+void UMDGameDataContainer::UnbindOnEntryChanged(const FGameplayTag& DataKey, FMDOnGameDataEntryChanged Delegate)
+{
+	if (TArray<FMDOnGameDataEntryChanged>* Delegates = DataEntryDynamicDelegates.Find(DataKey))
+	{
+		Delegates->Remove(Delegate);
+	}
+}
+
+FDelegateHandle UMDGameDataContainer::BindOnEntryChangedDelegate(const FGameplayTag& DataKey, FSimpleDelegate&& Delegate)
+{
+	return DataEntryDelegates.FindOrAdd(DataKey).Add(MoveTemp(Delegate));
+}
+
+void UMDGameDataContainer::UnbindOnEntryChangedDelegate(const FGameplayTag& DataKey, const FDelegateHandle& DelegateHandle)
+{
+	if (FSimpleMulticastDelegate* Delegates = DataEntryDelegates.Find(DataKey))
+	{
+		Delegates->Remove(DelegateHandle);
+	}
+}
+
+FString UMDGameDataContainer::GetEntryTypeString(const FGameplayTag& DataKey) const
+{
+	if (const FMDGameDataEntry* Entry = DataEntries.Find(DataKey))
+	{
+		return MDGameDataUtils::GetPropertyTypeAsString(Entry->EntryProperty);
+	}
+
+	return TEXT("None");
+}
+
 const FMDGameDataEntry& UMDGameDataContainer::AddEntry(const FGameplayTag& DataKey, FMDGameDataEntry&& Entry)
 {
 	const FMDGameDataEntry& NewEntry = DataEntries.Emplace(DataKey, MoveTemp(Entry));
-	
+
 	TSet<const FProperty*> SeenList;
 	if (MDGameDataContainer_Private::DoesPropertyReferenceUObjects(NewEntry.EntryProperty, SeenList))
 	{
 		// TODO - Do anything we can here to make AddReferencedObjects quicker
 		EntriesWithUObjects.Add(DataKey);
 	}
-	
+
 	return NewEntry;
+}
+
+void UMDGameDataContainer::BroadcastEntryChanged(const FGameplayTag& DataKey) const
+{
+	if (const FSimpleMulticastDelegate* Delegates = DataEntryDelegates.Find(DataKey))
+	{
+		Delegates->Broadcast();
+	}
+
+	if (const TArray<FMDOnGameDataEntryChanged>* Delegates = DataEntryDynamicDelegates.Find(DataKey))
+	{
+		for (const FMDOnGameDataEntryChanged& Delegate : *Delegates)
+		{
+			Delegate.ExecuteIfBound();
+		}
+	}
 }
 
 #undef LOCTEXT_NAMESPACE
