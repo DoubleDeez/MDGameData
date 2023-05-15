@@ -1,4 +1,5 @@
 #include "MDGameDataContainer.h"
+#include "Launch/Resources/Version.h"
 #include "UObject/UnrealType.h"
 
 #define LOCTEXT_NAMESPACE "MDGameDataContainer"
@@ -74,7 +75,14 @@ namespace MDGameDataContainer_Private
 		}
 		else if (const FStructProperty* StructProperty = CastField<FStructProperty>(Property))
 		{
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 2)
 			Collector.AddPropertyReferences(StructProperty->Struct, const_cast<void*>(ValuePtr));
+#else
+			for (TFieldIterator<const FProperty> It(StructProperty->Struct); It; ++It)
+			{
+				AddPropertyReferencedUObjects(Collector, *It, It->ContainerPtrToValuePtr<void>(ValuePtr), SeenList);
+			}
+#endif
 		}
 		else if (const FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property))
 		{

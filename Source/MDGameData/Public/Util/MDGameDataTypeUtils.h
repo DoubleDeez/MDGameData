@@ -182,7 +182,7 @@ struct TMDGameDataTypeUtils
 	MDGAMEDATA_API static FORCEINLINE const FProperty* ConstructProperty(const FName& PropName)
 	{
 		FStructProperty* StructProperty = static_cast<FStructProperty*>(FStructProperty::Construct({}, PropName, RF_Transient | RF_Public));
-		StructProperty->Struct = T::StaticStruct();//(TBaseStructure<T>::Get());
+		StructProperty->Struct = T::StaticStruct();
 		return StructProperty;
 	}
 };
