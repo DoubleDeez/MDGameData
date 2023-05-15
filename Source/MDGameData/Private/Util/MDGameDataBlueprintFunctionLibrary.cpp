@@ -65,12 +65,12 @@ DEFINE_FUNCTION(UMDGameDataBlueprintFunctionLibrary::execGetGameDataValue)
 
 	if (Result == EMDGameDataContainerResult::Failure_TypeMismatch)
 	{
-		// TODO - better type naming than just the property type (eg. element types of array, class type of objects, etc)
 		const FBlueprintExceptionInfo ExceptionInfo(
 			EBlueprintExceptionType::AccessViolation,
-			FText::Format(LOCTEXT("GetDataFailed", "Failed to GetData for key [{0}], caller is expecting type [{1}]"),
+			FText::Format(LOCTEXT("GetDataFailed", "Failed to GetData for key [{0}], caller is expecting type [{1}] but entry is of type [{2}]"),
 				FText::FromName(DataKey.GetTagName()),
-				FText::FromString(ValueProp->GetCPPType())
+				FText::FromString(MDGameDataUtils::GetPropertyTypeAsString(ValueProp)),
+				FText::FromString(GameDataContainer->GetEntryTypeString(DataKey))
 			)
 		);
 		FBlueprintCoreDelegates::ThrowScriptException(P_THIS, Stack, ExceptionInfo);
@@ -89,7 +89,7 @@ DEFINE_FUNCTION(UMDGameDataBlueprintFunctionLibrary::execGetGameDataValue)
 		*StaticCast<bool*>(RESULT_PARAM) = false;
 		return;
 	}
-	
+
 	*StaticCast<bool*>(RESULT_PARAM) = true;
 }
 
@@ -130,15 +130,15 @@ DEFINE_FUNCTION(UMDGameDataBlueprintFunctionLibrary::execSetGameDataValue)
 	P_NATIVE_BEGIN
 	Result = GameDataContainer->SetDataFromProperty(DataKey, ValueProp, ValuePtr);
 	P_NATIVE_END
-	
+
 	if (Result == EMDGameDataContainerResult::Failure_TypeMismatch)
 	{
-		// TODO - better type naming than just the property type (eg. element types of array, class type of objects, etc)
 		const FBlueprintExceptionInfo ExceptionInfo(
 			EBlueprintExceptionType::AccessViolation,
-			FText::Format(LOCTEXT("SetDataFailed", "Failed to SetData for key [{0}], caller is expecting type [{1}]"),
+			FText::Format(LOCTEXT("SetDataFailed", "Failed to SetData for key [{0}], caller is expecting type [{1}] but entry is of type [{2}]"),
 				FText::FromName(DataKey.GetTagName()),
-				FText::FromString(ValueProp->GetCPPType())
+				FText::FromString(MDGameDataUtils::GetPropertyTypeAsString(ValueProp)),
+				FText::FromString(GameDataContainer->GetEntryTypeString(DataKey))
 			)
 		);
 		FBlueprintCoreDelegates::ThrowScriptException(P_THIS, Stack, ExceptionInfo);
@@ -171,17 +171,17 @@ UMDGameDataContainer* UMDGameDataBlueprintFunctionLibrary::ResolveGameDataSource
 	{
 		return UMDGlobalGameDataSubsystem::GetGlobalGameDataContainer(Context);
 	}
-	
+
 	if (Source == EMDGameDataContainerSource::World)
 	{
 		return UMDWorldGameDataSubsystem::GetWorldGameDataContainer(Context);
 	}
-	
+
 	if (Source == EMDGameDataContainerSource::LocalPlayer)
 	{
 		return UMDLocalPlayerGameDataSubsystem::GetFirstLocalPlayerGameDataContainer(Context);
 	}
-	
+
 	if (Source == EMDGameDataContainerSource::Component)
 	{
 		if (const AActor* Actor = Cast<AActor>(Context))
