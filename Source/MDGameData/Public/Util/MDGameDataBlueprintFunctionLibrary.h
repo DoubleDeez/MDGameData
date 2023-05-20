@@ -26,7 +26,10 @@ public:
 	DECLARE_FUNCTION(execSetGameDataValue);
 
 	UFUNCTION(BlueprintCallable, Category="Game Data")
-	static UMDGameDataContainer* GetGameDataContainerForActor(const AActor* Actor);
+	static UMDGameDataContainer* FindGameDataContainerForActor(const AActor* Actor);
+
+	UFUNCTION(BlueprintCallable, Category="Game Data")
+	static UMDGameDataContainer* FindOrCreateGameDataContainerForActor(AActor* Actor);
 
 	UFUNCTION(BlueprintCallable, Category="Game Data", meta = (DefaultToSelf = "Context"))
 	static UMDGameDataContainer* ResolveGameDataSource(EMDGameDataContainerSource Source, UObject* Context);

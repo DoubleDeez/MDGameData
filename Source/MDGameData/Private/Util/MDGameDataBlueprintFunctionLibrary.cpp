@@ -149,7 +149,7 @@ DEFINE_FUNCTION(UMDGameDataBlueprintFunctionLibrary::execSetGameDataValue)
 	*StaticCast<bool*>(RESULT_PARAM) = true;
 }
 
-UMDGameDataContainer* UMDGameDataBlueprintFunctionLibrary::GetGameDataContainerForActor(const AActor* Actor)
+UMDGameDataContainer* UMDGameDataBlueprintFunctionLibrary::FindGameDataContainerForActor(const AActor* Actor)
 {
 	if (!IsValid(Actor))
 	{
@@ -160,6 +160,24 @@ UMDGameDataContainer* UMDGameDataBlueprintFunctionLibrary::GetGameDataContainerF
 	if (!IsValid(Component))
 	{
 		return nullptr;
+	}
+
+	return Component->GetGameDataContainer();
+}
+
+UMDGameDataContainer* UMDGameDataBlueprintFunctionLibrary::FindOrCreateGameDataContainerForActor(AActor* Actor)
+{
+	if (!IsValid(Actor))
+	{
+		return nullptr;
+	}
+
+	const UMDGameDataComponent* Component = Actor->FindComponentByClass<UMDGameDataComponent>();
+	if (!IsValid(Component))
+	{
+		constexpr bool bManualAttachment = false;
+		constexpr bool bDeferredFinish = false;
+		Component = Cast<UMDGameDataComponent>(Actor->AddComponentByClass(UMDGameDataComponent::StaticClass(), bManualAttachment, FTransform::Identity, bDeferredFinish));
 	}
 
 	return Component->GetGameDataContainer();
@@ -186,7 +204,7 @@ UMDGameDataContainer* UMDGameDataBlueprintFunctionLibrary::ResolveGameDataSource
 	{
 		if (const AActor* Actor = Cast<AActor>(Context))
 		{
-			return GetGameDataContainerForActor(Actor);
+			return FindGameDataContainerForActor(Actor);
 		}
 		else
 		{

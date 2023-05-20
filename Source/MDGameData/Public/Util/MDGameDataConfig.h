@@ -8,7 +8,7 @@ class UMDGameDataContainer;
 /**
  * 
  */
-UCLASS(DefaultConfig, Config=Game)
+UCLASS(DefaultConfig, Config=GameData)
 class MDGAMEDATA_API UMDGameDataConfig : public UDeveloperSettings
 {
 	GENERATED_BODY()

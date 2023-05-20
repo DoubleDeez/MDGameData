@@ -17,7 +17,6 @@ struct FMDGameDataEntry
 	~FMDGameDataEntry();
 
 	const FProperty* EntryProperty = nullptr;
-
 	void* EntryValuePtr = nullptr;
 };
 

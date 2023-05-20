@@ -7,6 +7,7 @@
 #include "UObject/Object.h"
 #include "Util/MDGameDataAllocator.h"
 #include "Util/MDGameDataUtils.h"
+#include "Util/MDGameDataTypeUtils.h"
 #include "MDGameDataContainer.generated.h"
 
 DECLARE_DYNAMIC_DELEGATE(FMDOnGameDataEntryChanged);
@@ -51,6 +52,12 @@ public:
 	EMDGameDataContainerResult GetData(const FGameplayTag& DataKey, T& OutResult) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Game Data", meta = (AutoCreateRefTerm = "DataKey"))
+	void RemoveEntry(const FGameplayTag& DataKey);
+
+	UFUNCTION(BlueprintCallable, Category = "Game Data", meta = (AutoCreateRefTerm = "DataKey"))
+	void ClearEntries();
+
+	UFUNCTION(BlueprintCallable, Category = "Game Data", meta = (AutoCreateRefTerm = "DataKey"))
 	void BindOnEntryChanged(const FGameplayTag& DataKey, FMDOnGameDataEntryChanged Delegate);
 
 	UFUNCTION(BlueprintCallable, Category = "Game Data", meta = (AutoCreateRefTerm = "DataKey"))
@@ -62,7 +69,12 @@ public:
 	FDelegateHandle BindOnEntryChangedDelegate(const FGameplayTag& DataKey, FSimpleDelegate&& Delegate);
 	void UnbindOnEntryChangedDelegate(const FGameplayTag& DataKey, const FDelegateHandle& DelegateHandle);
 
+	const FMDGameDataEntry* GetRawEntryPtr(const FGameplayTag& DataKey) const; 
+
 	FString GetEntryTypeString(const FGameplayTag& DataKey) const;
+
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnEntryEvent, const FGameplayTag&);
+	FOnEntryEvent OnAnyEntryChanged;
 
 protected:
 	const FMDGameDataEntry& AddEntry(const FGameplayTag& DataKey, FMDGameDataEntry&& Entry);

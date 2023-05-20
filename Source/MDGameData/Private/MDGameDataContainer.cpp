@@ -223,6 +223,31 @@ EMDGameDataContainerResult UMDGameDataContainer::GetDataFromProperty(const FGame
 	return EMDGameDataContainerResult::Success_ExistingEntry;
 }
 
+void UMDGameDataContainer::RemoveEntry(const FGameplayTag& DataKey)
+{
+	if (DataEntries.Contains(DataKey))
+	{
+		DataEntries.Remove(DataKey);
+		EntriesWithUObjects.Remove(DataKey);
+
+		BroadcastEntryChanged(DataKey);
+	}
+}
+
+void UMDGameDataContainer::ClearEntries()
+{
+	TArray<FGameplayTag> Keys;
+	DataEntries.GetKeys(Keys);
+
+	DataEntries.Reset();
+	EntriesWithUObjects.Reset();
+
+	for (const FGameplayTag& Key : Keys)
+	{
+		BroadcastEntryChanged(Key);
+	}
+}
+
 void UMDGameDataContainer::BindOnEntryChanged(const FGameplayTag& DataKey, FMDOnGameDataEntryChanged Delegate)
 {
 	DataEntryDynamicDelegates.FindOrAdd(DataKey).AddUnique(Delegate);
@@ -247,6 +272,11 @@ void UMDGameDataContainer::UnbindOnEntryChangedDelegate(const FGameplayTag& Data
 	{
 		Delegates->Remove(DelegateHandle);
 	}
+}
+
+const FMDGameDataEntry* UMDGameDataContainer::GetRawEntryPtr(const FGameplayTag& DataKey) const
+{
+	return DataEntries.Find(DataKey);
 }
 
 FString UMDGameDataContainer::GetEntryTypeString(const FGameplayTag& DataKey) const
@@ -287,6 +317,8 @@ void UMDGameDataContainer::BroadcastEntryChanged(const FGameplayTag& DataKey) co
 			Delegate.ExecuteIfBound();
 		}
 	}
+
+	OnAnyEntryChanged.Broadcast(DataKey);
 }
 
 #undef LOCTEXT_NAMESPACE

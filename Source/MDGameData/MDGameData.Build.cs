@@ -13,6 +13,7 @@ public class MDGameData : ModuleRules
 				"Core",
 				"DeveloperSettings",
 				"GameplayTags",
+				"NetCore",
 				"StructUtils"
 			}
 		);

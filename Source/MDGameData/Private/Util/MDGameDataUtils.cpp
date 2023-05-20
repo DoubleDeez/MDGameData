@@ -25,3 +25,16 @@ FString MDGameDataUtils::GetPropertyTypeAsString(const FProperty* Property)
 
 	return Property->GetCPPType();
 }
+
+FString MDGameDataUtils::GetPropertyValueAsString(const FProperty* Property, const void* ValuePtr)
+{
+	if (Property == nullptr || ValuePtr == nullptr)
+	{
+		return TEXT("NULL");
+	}
+
+	FString Result;
+	Property->ExportTextItem_Direct(Result, ValuePtr, nullptr, nullptr, PPF_DebugDump);
+
+	return Result;
+}
