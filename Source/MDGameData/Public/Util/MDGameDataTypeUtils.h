@@ -44,7 +44,7 @@ struct TMDGameDataTypeUtils
 	
 	static FProperty* ConstructProperty(const FName& PropName)
 	{
-		static_assert(false, "Missing implementation of TMDGameDataTypeUtils<T>::ConstructProperty");
+		static_assert(sizeof(T) == 0, "Missing implementation of TMDGameDataTypeUtils<T>::ConstructProperty");
 		return nullptr;
 	}
 };
