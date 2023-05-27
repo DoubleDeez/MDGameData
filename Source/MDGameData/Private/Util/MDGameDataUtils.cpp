@@ -1,5 +1,9 @@
 #include "Util/MDGameDataUtils.h"
 
+#include "UObject/Field.h"
+#include "UObject/PropertyPortFlags.h"
+#include "UObject/UnrealType.h"
+
 
 using namespace MDGameDataUtils;
 

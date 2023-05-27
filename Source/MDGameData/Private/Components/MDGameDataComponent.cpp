@@ -1,5 +1,6 @@
 #include "Components/MDGameDataComponent.h"
 
+#include "GameFramework/Actor.h"
 #include "GameplayTagsManager.h"
 #include "MDGameDataContainer.h"
 #include "Net/UnrealNetwork.h"
@@ -16,7 +17,7 @@ void UMDGameDataComponent::OnRegister()
 
 	const UMDGameDataConfig* Config = GetDefault<UMDGameDataConfig>();
 	check(!Config->GameDataContainerClass.IsNull());
-	
+
 	GameDataContainer = NewObject<UMDGameDataContainer>(this, Config->GameDataContainerClass.LoadSynchronous());
 	const FMDGameDataContainerInitData InitData = {
 		InitialGameDataReserveSize
@@ -51,7 +52,7 @@ void UMDGameDataComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		GameDataContainer->ClearEntries();
 	}
-	
+
 	Super::EndPlay(EndPlayReason);
 }
 
