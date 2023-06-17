@@ -5,8 +5,8 @@ public class MDGameData : ModuleRules
 	public MDGameData(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
-		
+
+
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
@@ -17,8 +17,8 @@ public class MDGameData : ModuleRules
 				"StructUtils"
 			}
 		);
-			
-		
+
+
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{

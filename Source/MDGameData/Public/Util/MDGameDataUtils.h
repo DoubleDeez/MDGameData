@@ -1,6 +1,8 @@
 #pragma once
 
-#include "CoreMinimal.h"
+#include "Containers/UnrealString.h"
+
+class FProperty;
 
 namespace MDGameDataUtils
 {

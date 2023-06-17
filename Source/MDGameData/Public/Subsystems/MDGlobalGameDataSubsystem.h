@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "MDGlobalGameDataSubsystem.generated.h"
@@ -8,7 +7,7 @@
 class UMDGameDataContainer;
 
 /**
- * 
+ *
  */
 UCLASS()
 class MDGAMEDATA_API UMDGlobalGameDataSubsystem : public UGameInstanceSubsystem
@@ -17,7 +16,7 @@ class MDGAMEDATA_API UMDGlobalGameDataSubsystem : public UGameInstanceSubsystem
 
 public:
 	static UMDGlobalGameDataSubsystem* Get(const UObject* WorldContextObject);
-	
+
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 

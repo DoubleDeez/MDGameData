@@ -1,11 +1,10 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "K2Node_CallFunction.h"
 #include "MDGameDataNode_SetData.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class MDGAMEDATAGRAPH_API UMDGameDataNode_SetData : public UK2Node_CallFunction
@@ -17,7 +16,7 @@ public:
 
 	// //~ Begin UEdGraphNode Interface.
 	virtual void AllocateDefaultPins() override;
-	virtual FText GetTooltipText() const override;	
+	virtual FText GetTooltipText() const override;
 	// //~ End UEdGraphNode Interface.
 
 	//~ Begin K2Node Interface

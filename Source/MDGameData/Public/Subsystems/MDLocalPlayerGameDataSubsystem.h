@@ -1,13 +1,12 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "MDLocalPlayerGameDataSubsystem.generated.h"
 
 class UMDGameDataContainer;
 
 /**
- * 
+ *
  */
 UCLASS()
 class MDGAMEDATA_API UMDLocalPlayerGameDataSubsystem : public ULocalPlayerSubsystem
@@ -16,7 +15,7 @@ class MDGAMEDATA_API UMDLocalPlayerGameDataSubsystem : public ULocalPlayerSubsys
 
 public:
 	static UMDLocalPlayerGameDataSubsystem* GetForFirstLocalPlayer(const UObject* WorldContextObject);
-	
+
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 

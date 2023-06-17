@@ -1,4 +1,5 @@
 #include "Util/MDGameDataAllocator.h"
+#include "Misc/ScopeLock.h"
 
 FMDGameDataAllocator::~FMDGameDataAllocator()
 {
@@ -12,7 +13,7 @@ FMDGameDataAllocator::~FMDGameDataAllocator()
 void* FMDGameDataAllocator::Allocate(uint64 Size)
 {
 	FScopeLock _(&Cs);
-	const uint64 AllocationSize = Size + (-int64(Size) & 15); 
+	const uint64 AllocationSize = Size + (-int64(Size) & 15);
 	if (!CurrentSlab || CurrentSlabAllocatedSize + AllocationSize > SlabSize)
 	{
 		TotalAllocatedSize += SlabSize;
@@ -21,7 +22,7 @@ void* FMDGameDataAllocator::Allocate(uint64 Size)
 		CurrentSlabAllocatedSize = 0;
 		Slabs.Add(CurrentSlab);
 	}
-	
+
 	void* Allocation = CurrentSlab + CurrentSlabAllocatedSize;
 	CurrentSlabAllocatedSize += AllocationSize;
 	return Allocation;

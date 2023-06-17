@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Net/Serialization/FastArraySerializer.h"
 #include "MDReplicatedGameData.generated.h"

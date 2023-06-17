@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "MDGameDataTypes.generated.h"
 
 UENUM(BlueprintType)

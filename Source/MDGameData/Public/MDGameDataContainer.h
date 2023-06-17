@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include <typeinfo>
 #include "GameplayTagContainer.h"
 #include "MDGameDataEntry.h"
@@ -69,7 +68,7 @@ public:
 	FDelegateHandle BindOnEntryChangedDelegate(const FGameplayTag& DataKey, FSimpleDelegate&& Delegate);
 	void UnbindOnEntryChangedDelegate(const FGameplayTag& DataKey, const FDelegateHandle& DelegateHandle);
 
-	const FMDGameDataEntry* GetRawEntryPtr(const FGameplayTag& DataKey) const; 
+	const FMDGameDataEntry* GetRawEntryPtr(const FGameplayTag& DataKey) const;
 
 	FString GetEntryTypeString(const FGameplayTag& DataKey) const;
 

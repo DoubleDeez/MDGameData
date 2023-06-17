@@ -1,13 +1,12 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "MDWorldGameDataSubsystem.generated.h"
 
 class UMDGameDataContainer;
 
 /**
- * 
+ *
  */
 UCLASS()
 class MDGAMEDATA_API UMDWorldGameDataSubsystem : public UWorldSubsystem
@@ -16,7 +15,7 @@ class MDGAMEDATA_API UMDWorldGameDataSubsystem : public UWorldSubsystem
 
 public:
 	static UMDWorldGameDataSubsystem* Get(const UObject* WorldContextObject);
-	
+
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 

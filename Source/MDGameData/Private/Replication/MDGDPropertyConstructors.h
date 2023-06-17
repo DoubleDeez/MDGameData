@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "UObject/Package.h"
 #include "UObject/TextProperty.h"
 

@@ -1,6 +1,9 @@
 #pragma once
 
-#include "CoreMinimal.h"
+#include "Containers/Array.h"
+#include "HAL/CriticalSection.h"
+#include "HAL/Platform.h"
+
 
 // Ripped off version of FSlabAllocator
 class FMDGameDataAllocator

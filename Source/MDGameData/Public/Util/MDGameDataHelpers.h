@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "MDGameDataBlueprintFunctionLibrary.h"
 #include "MDGameDataContainer.h"
 
@@ -25,7 +24,7 @@ namespace MDGameDataHelpers
 
 		return {};
 	}
-	
+
 	template<typename T>
 	static bool GetGameDataForActor(const AActor* Actor, const FGameplayTag& DataKey, T& OutValue)
 	{
@@ -35,7 +34,7 @@ namespace MDGameDataHelpers
 			const EMDGameDataContainerResult Result = Container->GetData(DataKey, OutValue);
 			return Result == EMDGameDataContainerResult::Success_ExistingEntry;
 		}
-		
+
 		return false;
 	}
 
@@ -49,7 +48,7 @@ namespace MDGameDataHelpers
 			return Result == EMDGameDataContainerResult::Success_ExistingEntry
 				|| Result == EMDGameDataContainerResult::Success_NewEntry;
 		}
-		
+
 		return false;
 	}
 };

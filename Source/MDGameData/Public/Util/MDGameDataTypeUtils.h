@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "MDGameDataUtils.h"
 #include "UObject/EnumProperty.h"
 #include "UObject/UnrealType.h"
@@ -41,7 +40,7 @@ template<typename T, typename = void>
 struct TMDGameDataTypeUtils
 {
 	static const TCHAR* GetTypeName() { return TEXT("INVALID"); }
-	
+
 	static FProperty* ConstructProperty(const FName& PropName)
 	{
 		static_assert(sizeof(T) == 0, "Missing implementation of TMDGameDataTypeUtils<T>::ConstructProperty");
@@ -247,12 +246,12 @@ struct TMDGameDataTypeUtils
 		{
 			StructProperty->SetPropertyFlags(CPF_HasGetValueTypeHash);
 		}
-				
+
 		if (StructProperty->Struct->StructFlags & STRUCT_HasInstancedReference)
 		{
 			StructProperty->SetPropertyFlags(CPF_ContainsInstancedReference);
 		}
-		
+
 		return StructProperty;
 	}
 };

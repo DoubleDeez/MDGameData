@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
 #include "Replication/MDReplicatedGameData.h"
@@ -21,7 +20,7 @@ public:
 	virtual void OnRegister() override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
 	UFUNCTION(BlueprintCallable, Category = "Game Data")
 	UMDGameDataContainer* GetGameDataContainer() const { return GameDataContainer; }
 
@@ -39,10 +38,10 @@ private:
 
 	void ServerOnEntryChanged(const FGameplayTag& EntryKey);
 #endif
-	
+
 	UPROPERTY(Replicated)
 	FMDReplicatedGameData ReplicatedGameData;
-	
+
 	UPROPERTY(Transient)
 	TObjectPtr<UMDGameDataContainer> GameDataContainer = nullptr;
 };

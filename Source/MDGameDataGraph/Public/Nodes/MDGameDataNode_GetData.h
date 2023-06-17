@@ -1,11 +1,10 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "K2Node_CallFunction.h"
 #include "MDGameDataNode_GetData.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class MDGAMEDATAGRAPH_API UMDGameDataNode_GetData : public UK2Node_CallFunction
