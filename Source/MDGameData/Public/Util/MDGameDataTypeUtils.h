@@ -1,13 +1,14 @@
 #pragma once
 
 #include "MDGameDataUtils.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "UObject/EnumProperty.h"
 #include "UObject/UnrealType.h"
 
 #define MDGAMEDATA_DECLARETYPEUTILS(CPP_TYPE) template<> \
 struct TMDGameDataTypeUtils<CPP_TYPE> \
 { \
-	MDGAMEDATA_API static const TCHAR* GetTypeName() { return TEXT( #CPP_TYPE ); } \
+	MDGAMEDATA_API static FString GetTypeName() { return TEXT( #CPP_TYPE ); } \
 	MDGAMEDATA_API static FProperty* ConstructProperty(const FName& PropName); \
 };
 
@@ -39,7 +40,7 @@ FProperty* TMDGameDataTypeUtils<CPP_TYPE>::ConstructProperty(const FName& PropNa
 template<typename T, typename = void>
 struct TMDGameDataTypeUtils
 {
-	static const TCHAR* GetTypeName() { return TEXT("INVALID"); }
+	static FString GetTypeName() { return TEXT("INVALID"); }
 
 	static FProperty* ConstructProperty(const FName& PropName)
 	{
@@ -49,7 +50,7 @@ struct TMDGameDataTypeUtils
 };
 
 template<typename T>
-using TMDGameDataForceResolveRawType = typename TRemoveCV<typename TRemoveObjectPointer<typename TRemoveCV<typename TRemovePointer<T>::Type>::Type>::Type>::Type;
+using TMDGameDataForceResolveRawType = typename std::remove_cv_t<typename TRemoveObjectPointer<typename std::remove_cv_t<typename TRemovePointer<T>::Type>>::Type>;
 
 template<typename T, typename ForcedRawT = TMDGameDataForceResolveRawType<T>>
 using TMDGameDataResolvedType = typename TChooseClass<TIsDerivedFrom<ForcedRawT, UObject>::IsDerived, ForcedRawT, T>::Result;
@@ -62,7 +63,7 @@ namespace MDGameDataUtils
 		static FProperty* StaticProp = nullptr;
 		if (StaticProp == nullptr)
 		{
-			const FName PropName = *FString::Printf(TEXT("MDGameDataProp_%s"), TMDGameDataTypeUtils<RawT>::GetTypeName());
+			const FName PropName = *FString::Printf(TEXT("MDGameDataProp_%s"), *TMDGameDataTypeUtils<RawT>::GetTypeName());
 			StaticProp = TMDGameDataTypeUtils<RawT>::ConstructProperty(PropName);
 		}
 
@@ -89,7 +90,11 @@ MDGAMEDATA_DECLARETYPEUTILS(double)
 
 MDGAMEDATA_DECLARETYPEUTILS(FString)
 MDGAMEDATA_DECLARETYPEUTILS(FName)
-MDGAMEDATA_DECLARETYPEUTILS(FText)
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
+// TODO - As of Unreal 5.3, `FTextProperty::Construct` is no longer exported so we need an alternative
+#else
+//MDGAMEDATA_DECLARETYPEUTILS(FText)
+#endif
 
 MDGAMEDATA_DECLARETYPEUTILS(FIntPoint)
 MDGAMEDATA_DECLARETYPEUTILS(FIntVector)
@@ -167,7 +172,7 @@ template<typename T>
 struct TMDGameDataTypeUtils
 <TSubclassOf<T>>
 {
-	static const TCHAR* GetTypeName() { return *FString::Printf(TEXT("TSubclassOf<%s>"), TMDGameDataTypeUtils<T>::GetTypeName()); }
+	static FString GetTypeName() { return FString::Printf(TEXT("TSubclassOf<%s>"), *TMDGameDataTypeUtils<T>::GetTypeName()); }
 	static FORCEINLINE FProperty* ConstructProperty(const FName& PropName)
 	{
 		FClassProperty* ClassProperty = static_cast<FClassProperty*>(FClassProperty::Construct({}, PropName, RF_Transient | RF_Public));
@@ -181,7 +186,7 @@ template<typename T>
 struct TMDGameDataTypeUtils
 <T, typename TEnableIf<TIsDerivedFrom<T, UObject>::IsDerived>::Type>
 {
-	static const TCHAR* GetTypeName() { return *T::StaticClass()->GetName(); }
+	static FString GetTypeName() { return T::StaticClass()->GetName(); }
 	static FORCEINLINE FProperty* ConstructProperty(const FName& PropName)
 	{
 		FObjectProperty* ObjectProperty = static_cast<FObjectProperty*>(FObjectProperty::Construct({}, PropName, RF_Transient | RF_Public));
@@ -199,7 +204,7 @@ template<typename T>
 struct TMDGameDataTypeUtils
 <TWeakObjectPtr<T>>
 {
-	static const TCHAR* GetTypeName() { return *FString::Printf(TEXT("TWeakObjectPtr<%s>"), TMDGameDataTypeUtils<T>::GetTypeName()); }
+	static FString GetTypeName() { return FString::Printf(TEXT("TWeakObjectPtr<%s>"), *TMDGameDataTypeUtils<T>::GetTypeName()); }
 	static FORCEINLINE FProperty* ConstructProperty(const FName& PropName)
 	{
 		FWeakObjectProperty* ObjectProperty = static_cast<FWeakObjectProperty*>(FWeakObjectProperty::Construct({}, PropName, RF_Transient | RF_Public));
@@ -217,7 +222,7 @@ template<typename T>
 struct TMDGameDataTypeUtils
 <TObjectPtr<T>>
 {
-	static const TCHAR* GetTypeName() { return *FString::Printf(TEXT("TObjectPtr<%s>"), TMDGameDataTypeUtils<T>::GetTypeName()); }
+	static FString GetTypeName() { return FString::Printf(TEXT("TObjectPtr<%s>"), *TMDGameDataTypeUtils<T>::GetTypeName()); }
 	static FORCEINLINE FProperty* ConstructProperty(const FName& PropName)
 	{
 		FObjectPtrProperty* ObjectProperty = static_cast<FObjectPtrProperty*>(FObjectPtrProperty::Construct({}, PropName, RF_Transient | RF_Public));
@@ -235,7 +240,7 @@ template<typename T>
 struct TMDGameDataTypeUtils
 <T, typename TMDGDVoid<decltype(T::StaticStruct())>::Type>
 {
-	static const TCHAR* GetTypeName() { return *T::StaticStruct()->GetName(); }
+	static FString GetTypeName() { return T::StaticStruct()->GetName(); }
 	static FORCEINLINE FProperty* ConstructProperty(const FName& PropName)
 	{
 		FStructProperty* StructProperty = static_cast<FStructProperty*>(FStructProperty::Construct({}, PropName, RF_Transient | RF_Public));
@@ -260,7 +265,7 @@ template<typename T>
 struct TMDGameDataTypeUtils
 <T, typename TEnableIf<TIsEnumClass<T>::Value>::Type>
 {
-	static const TCHAR* GetTypeName() { return *StaticEnum<T>()->CppType; }
+	static FString GetTypeName() { return StaticEnum<T>()->CppType; }
 	static FORCEINLINE FProperty* ConstructProperty(const FName& PropName)
 	{
 		FEnumProperty* EnumProperty = static_cast<FEnumProperty*>(FEnumProperty::Construct({}, PropName, RF_Transient | RF_Public));
@@ -277,7 +282,7 @@ template<typename T>
 struct TMDGameDataTypeUtils
 <TArray<T>>
 {
-	static const TCHAR* GetTypeName() { return *FString::Printf(TEXT("TArray<%s>"), TMDGameDataTypeUtils<T>::GetTypeName()); }
+	static FString GetTypeName() { return FString::Printf(TEXT("TArray<%s>"), *TMDGameDataTypeUtils<T>::GetTypeName()); }
 	static FORCEINLINE FProperty* ConstructProperty(const FName& PropName)
 	{
 		FArrayProperty* ArrayProperty = static_cast<FArrayProperty*>(FArrayProperty::Construct({}, PropName, RF_Transient | RF_Public));
@@ -290,7 +295,7 @@ template<typename T>
 struct TMDGameDataTypeUtils
 <TSet<T>>
 {
-	static const TCHAR* GetTypeName() { return *FString::Printf(TEXT("TSet<%s>"), TMDGameDataTypeUtils<T>::GetTypeName()); }
+	static FString GetTypeName() { return FString::Printf(TEXT("TSet<%s>"), *TMDGameDataTypeUtils<T>::GetTypeName()); }
 	static FORCEINLINE FProperty* ConstructProperty(const FName& PropName)
 	{
 		FSetProperty* SetProperty = static_cast<FSetProperty*>(FSetProperty::Construct({}, PropName, RF_Transient | RF_Public));
@@ -303,7 +308,7 @@ template<typename T, typename U>
 struct TMDGameDataTypeUtils
 <TMap<T, U>>
 {
-	static const TCHAR* GetTypeName() { return *FString::Printf(TEXT("TMap<%s, %s>"), TMDGameDataTypeUtils<T>::GetTypeName(), TMDGameDataTypeUtils<U>::GetTypeName()); }
+	static FString GetTypeName() { return FString::Printf(TEXT("TMap<%s, %s>"), *TMDGameDataTypeUtils<T>::GetTypeName(), *TMDGameDataTypeUtils<U>::GetTypeName()); }
 	static FORCEINLINE FProperty* ConstructProperty(const FName& PropName)
 	{
 		FMapProperty* MapProperty = static_cast<FMapProperty*>(FMapProperty::Construct({}, PropName, RF_Transient | RF_Public));

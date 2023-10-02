@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Runtime/Launch/Resources/Version.h"
 #include "UObject/Package.h"
 #include "UObject/TextProperty.h"
 
@@ -41,7 +42,11 @@ namespace MDGDPropertyConstructors
 		}
 		else if (Flags & CASTCLASS_FEnumProperty)
 		{
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
+			// TODO - As of Unreal 5.3, `FEnumProperty::Construct` is no longer exported so we need an alternative
+#else
 			return static_cast<FProperty*>(FEnumProperty::Construct(GetTransientPackage(), Name, RF_Public));
+#endif
 		}
 		else if (Flags & CASTCLASS_FDoubleProperty)
 		{
@@ -53,7 +58,11 @@ namespace MDGDPropertyConstructors
 		}
 		else if (Flags & CASTCLASS_FTextProperty)
 		{
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
+			// TODO - As of Unreal 5.3, `FTextProperty::Construct` is no longer exported so we need an alternative
+#else
 			return static_cast<FProperty*>(FTextProperty::Construct(GetTransientPackage(), Name, RF_Public));
+#endif
 		}
 		else if (Flags & CASTCLASS_FInt64Property)
 		{

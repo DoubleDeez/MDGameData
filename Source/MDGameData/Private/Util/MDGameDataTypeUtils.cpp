@@ -1,5 +1,6 @@
 #include "Util/MDGameDataTypeUtils.h"
 
+#include "Runtime/Launch/Resources/Version.h"
 #include "UObject/TextProperty.h"
 #include "UObject/UnrealType.h"
 
@@ -17,7 +18,11 @@ MDGAMEDATA_DEFINETYPEUTILS(double, FDoubleProperty)
 
 MDGAMEDATA_DEFINETYPEUTILS(FString, FStrProperty)
 MDGAMEDATA_DEFINETYPEUTILS(FName, FNameProperty)
-MDGAMEDATA_DEFINETYPEUTILS(FText, FTextProperty)
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
+// TODO - As of Unreal 5.3, `FTextProperty::Construct` is no longer exported so we need an alternative
+#else
+//MDGAMEDATA_DEFINETYPEUTILS(FText, FTextProperty)
+#endif
 
 MDGAMEDATA_DEFINETYPEUTILS_STRUCT(FIntPoint)
 MDGAMEDATA_DEFINETYPEUTILS_STRUCT(FIntVector)

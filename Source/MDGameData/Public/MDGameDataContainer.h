@@ -145,7 +145,7 @@ FDelegateHandle UMDGameDataContainer::BindOnEntryChangedDelegate(const FGameplay
 template <typename T>
 void UMDGameDataContainer::NotifyNewEntryValue(FGameplayTag DataKey, TDelegate<void(T)> Delegate)
 {
-	using ValueType = typename TRemoveCV<typename TRemoveReference<T>::Type>::Type;
+	using ValueType = typename std::remove_cv_t<typename TRemoveReference<T>::Type>;
 
 	ValueType Value;
 	GetData(DataKey, Value);
